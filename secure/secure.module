@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * @file
+ * Module file for the field based login module.
+ */
+
+  module_load_include('inc', 'secure', 'includes/secure.admin'); 
+ 
+/**
+ * Implements hook_help().
+ */
+function secure_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#secure':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module extends drupal secuirty by allowing password secuirty for specific pages.');
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Allow securing pages.') . '</dt>';
+      $output .= '<dd>' . t("help you to protect your data.") . '</dd>';
+      $output .= '</dl>';
+      return $output;
+  }
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function secure_menu() {  
+  $items['admin/config/system/secure'] = array(
+    'title' => 'Secure pages',
+    'description' => 'Configurations for secure page.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_secure_configuration'),
+    'access arguments' => array('administer secure'),
+    'file' => 'includes/secure.admin.inc',
+  );
+  
+  $items['secure/valid'] = array(
+    'title' => 'Authentication',
+    'description' => 'validate credential.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_secure_valid_form'),
+    //'access arguments' => array('administer secure'),
+	'access callback' => TRUE,
+    'file' => 'includes/secure.admin.inc',
+  );  
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function secure_permission() {
+  return array(
+    'administer secure' => array(
+      'title' => t('Administer secure'),
+      'description' => t('Perform administrative tasks on secure module'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_page_build(&$page).
+ */
+function secure_page_build(&$page) {
+	global $user;
+	
+	$secure_page_list_strng =  implode(",",variable_get('secure'));
+  
+	$path_args = explode('/', current_path());
+	if (isset($path_args[1])) {
+		$nlist = str_replace(array("%uid","%nid"),array($user->uid,$path_args[1]), $secure_page_list_strng );
+		if (in_array(drupal_get_path_alias(current_path()) ,explode(',', $nlist)))  {
+			$options = array('query' => array('destination' => drupal_get_path_alias(current_path())));
+			$rtrv_cache = cache_get('secure_page_uid-'.$user->uid, $bin = 'cache');
+
+			if ($rtrv_cache === false) {
+				drupal_goto('secure/valid', $options);				
+			}
+		}
+	}	
+}
+

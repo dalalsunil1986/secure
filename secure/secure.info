@@ -1,0 +1,10 @@
+name = Secure lock
+description = "Allows user to protect their pages."
+core = 7.x
+dependencies[] = ctools
+files[] = includes/secure.admin.inc
+
+#configure = admin/config/system/secure
+
+
+
